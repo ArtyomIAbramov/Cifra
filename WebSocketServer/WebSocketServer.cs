@@ -2,21 +2,18 @@
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
-using WebSocketServer.MessageHandlers;
 
 namespace WebSocketServer.WebSocketServer
 {
     public class WebSocketServer
     {
         private HttpListener listener;
-        private MessageHandler messageHandler;
         private ConcurrentBag<WebSocket> clients = new ConcurrentBag<WebSocket>();
 
-        public WebSocketServer(string uri, MessageHandler messageHandler)
+        public WebSocketServer(string uri)
         {
             listener = new HttpListener();
             listener.Prefixes.Add(uri);
-            this.messageHandler = messageHandler;
         }
 
         public void Start()
@@ -30,6 +27,12 @@ namespace WebSocketServer.WebSocketServer
         {
             listener.Stop();
             Console.WriteLine("WebSocket server stopped.");
+        }
+
+        public Task<string> HandleMessageAsync(string message)
+        {
+            var timestampedMessage = $"[{DateTime.Now:HH:mm:ss}] {message}";
+            return Task.FromResult(timestampedMessage);
         }
 
         private async void ListenAsync()
@@ -73,7 +76,7 @@ namespace WebSocketServer.WebSocketServer
                     }
 
                     string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    var processedMessage = await messageHandler.HandleMessageAsync(message);
+                    var processedMessage = await HandleMessageAsync(message);
                     await BroadcastMessageAsync(processedMessage);
                 }
             }
