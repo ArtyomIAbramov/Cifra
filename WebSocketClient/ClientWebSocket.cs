@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using Newtonsoft.Json;
+using System.Net.WebSockets;
 using System.Text;
 
 namespace WebSocketClient.WebSocketClient
@@ -59,6 +60,18 @@ namespace WebSocketClient.WebSocketClient
                     break;
                 }
             }
+        }
+
+        private static readonly HttpClient client = new HttpClient();
+
+        public async Task<int> GetConnectedClientsCount()
+        {
+            var response = await client.GetAsync("http://localhost:5000/clients");
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<dynamic>(jsonResponse);
+            return (int)result.Count;
         }
 
         public async Task SendMessageAsync(string message)

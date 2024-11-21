@@ -21,6 +21,9 @@ while (true)
         Console.Write("Message is null");
 }
 
+Console.WriteLine("Connected clients count:");
+var count = client.GetConnectedClientsCount().Result;
+Console.WriteLine(count);
 
 Console.WriteLine("Client stopped.");
 
