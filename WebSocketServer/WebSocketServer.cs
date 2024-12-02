@@ -3,6 +3,9 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using WebSocketServer.DataBase.Models;
+using WebSocketServer.DataBase;
 
 namespace WebSocketServer.WebSocketServer
 {
@@ -109,6 +112,24 @@ namespace WebSocketServer.WebSocketServer
             var buffer = Encoding.UTF8.GetBytes(message);
             foreach (var client in clients)
             {
+                var messageEntity = new Message
+                {
+                    Content = message,
+                    SentAt = DateTime.UtcNow,
+                    Client = new Client
+                    {
+                        SubProtocol = client.SubProtocol,
+                        ConnectedAt = DateTime.UtcNow
+                    }
+                };
+
+                using (var db = DatabaseContext.Instance.GetContext())
+                {
+                    db.Messages.Add(messageEntity);
+                    await db.SaveChangesAsync();
+                }
+
+
                 if (client.State == WebSocketState.Open)
                 {
                     await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
